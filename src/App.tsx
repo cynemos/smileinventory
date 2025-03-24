@@ -13,6 +13,8 @@ import Alerts from './pages/Alerts';
 import Login from './pages/Login';
 import Settings from './pages/Settings';
 import Help from './pages/Help';
+import About from './pages/About';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -36,6 +38,8 @@ function App() {
             <Route path="alerts" element={<Alerts />} />
             <Route path="settings" element={<Settings />} />
             <Route path="help" element={<Help />} />
+            <Route path="about" element={<About />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
         </Routes>
       </Router>

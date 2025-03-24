@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Package, AlertTriangle, ArrowRight, Loader2, Building2, Phone, Mail, FileText } from 'lucide-react';
+import { Package, AlertTriangle, ArrowRight, Loader2, Building2, Phone, Mail, FileText, CheckCircle } from 'lucide-react';
 import { fetchLowStockProducts } from '../store/slices/alertsSlice';
 import type { AppDispatch, RootState } from '../store';
 import { Link } from 'react-router-dom';
@@ -8,10 +8,28 @@ import { Link } from 'react-router-dom';
 function Alerts() {
   const dispatch = useDispatch<AppDispatch>();
   const { lowStockProducts, loading, error } = useSelector((state: RootState) => state.alerts);
+  const [orderDates, setOrderDates] = useState<{ [productId: string]: string }>({});
 
   useEffect(() => {
     dispatch(fetchLowStockProducts());
   }, [dispatch]);
+
+  const handleOrderClick = (productId: string) => {
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    setOrderDates(prev => ({ ...prev, [productId]: formattedDate }));
+  };
+
+  const getIconColor = (productId: string) => {
+    return orderDates[productId] ? 'text-green-600 hover:text-green-800' : 'text-red-600 hover:text-red-800';
+  };
 
   if (loading) {
     return (
@@ -101,13 +119,26 @@ function Alerts() {
                       </div>
                     </div>
                   </div>
-                  <Link
-                    to="/inventory"
-                    className="flex items-center text-primary-600 hover:text-primary-900"
-                  >
-                    <span className="text-sm font-medium">Voir l'inventaire</span>
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
+                  <div className="flex flex-col items-end">
+                    <button
+                      onClick={() => handleOrderClick(product.id)}
+                      className={getIconColor(product.id)}
+                    >
+                      <CheckCircle className="h-6 w-6" />
+                    </button>
+                    {orderDates[product.id] && (
+                      <div className="mt-1 text-xs text-gray-500">
+                        Commandé le: {orderDates[product.id]}
+                      </div>
+                    )}
+                    <Link
+                      to="/inventory"
+                      className="flex items-center text-primary-600 hover:text-primary-900 mt-2"
+                    >
+                      <span className="text-sm font-medium">Voir l'inventaire</span>
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             );

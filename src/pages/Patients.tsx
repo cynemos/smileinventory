@@ -218,41 +218,49 @@ function Patients() {
               </button>
             </div>
             <div>
-              <h3 className="text-lg font-medium mb-2">Allergies</h3>
+              <h3 className="text-lg font-medium mb-2">
+                <strong className="text-black">Allergies</strong>
+              </h3>
               {showMedicalHistory.medical_history?.allergies.length ? (
                 <ul>
                   {showMedicalHistory.medical_history.allergies.map((allergy, index) => (
-                    <li key={index}>{allergy}</li>
+                    <li key={index} className="text-blue-500">{allergy}</li>
                   ))}
                 </ul>
               ) : (
-                <p>Aucune allergie enregistrée.</p>
+                <p className="text-blue-500">Aucune allergie enregistrée.</p>
               )}
 
-              <h3 className="text-lg font-medium mb-2">Conditions médicales</h3>
+              <h3 className="text-lg font-medium mb-2">
+                <strong className="text-black">Conditions médicales</strong>
+              </h3>
               {showMedicalHistory.medical_history?.conditions.length ? (
                 <ul>
                   {showMedicalHistory.medical_history.conditions.map((condition, index) => (
-                    <li key={index}>{condition}</li>
+                    <li key={index} className="text-blue-500">{condition}</li>
                   ))}
                 </ul>
               ) : (
-                <p>Aucune condition médicale enregistrée.</p>
+                <p className="text-blue-500">Aucune condition médicale enregistrée.</p>
               )}
 
-              <h3 className="text-lg font-medium mb-2">Médicaments</h3>
+              <h3 className="text-lg font-medium mb-2">
+                <strong className="text-black">Médicaments</strong>
+              </h3>
               {showMedicalHistory.medical_history?.medications.length ? (
                 <ul>
                   {showMedicalHistory.medical_history.medications.map((medication, index) => (
-                    <li key={index}>{medication}</li>
+                    <li key={index} className="text-blue-500">{medication}</li>
                   ))}
                 </ul>
               ) : (
-                <p>Aucun médicament enregistré.</p>
+                <p className="text-blue-500">Aucun médicament enregistré.</p>
               )}
 
-              <h3 className="text-lg font-medium mb-2">Notes médicales</h3>
-              <p>{showMedicalHistory.medical_history?.notes || 'Aucune note médicale enregistrée.'}</p>
+              <h3 className="text-lg font-medium mb-2">
+                <strong className="text-black">Notes médicales</strong>
+              </h3>
+              <p className="text-blue-500">{showMedicalHistory.medical_history?.notes || 'Aucune note médicale enregistrée.'}</p>
             </div>
           </div>
         </div>

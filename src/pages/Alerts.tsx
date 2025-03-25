@@ -4,6 +4,7 @@ import { Package, AlertTriangle, ArrowRight, Loader2, Building2, Phone, Mail, Fi
 import { fetchLowStockProducts } from '../store/slices/alertsSlice';
 import type { AppDispatch, RootState } from '../store';
 import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 function Alerts() {
   const dispatch = useDispatch<AppDispatch>();
@@ -12,19 +13,63 @@ function Alerts() {
 
   useEffect(() => {
     dispatch(fetchLowStockProducts());
+    fetchOrderDates();
   }, [dispatch]);
 
-  const handleOrderClick = (productId: string) => {
+  const fetchOrderDates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('product_orders')
+        .select('*');
+
+      if (error) {
+        console.error('Error fetching order dates:', error);
+        return;
+      }
+
+      const orderDatesMap: { [productId: string]: string } = {};
+      data.forEach(item => {
+        orderDatesMap[item.product_id] = item.order_date;
+      });
+      setOrderDates(orderDatesMap);
+    } catch (error) {
+      console.error('Error fetching order dates:', error);
+    }
+  };
+
+  const handleOrderClick = async (productId: string) => {
     const now = new Date();
-    const formattedDate = now.toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
+    const formattedDate = now.toISOString();
+
     setOrderDates(prev => ({ ...prev, [productId]: formattedDate }));
+
+    try {
+      // Upsert order date in Supabase
+      const { data, error } = await supabase
+        .from('product_orders')
+        .upsert(
+          { product_id: productId, order_date: formattedDate },
+          { onConflict: ['product_id'] }
+        );
+
+      if (error) {
+        console.error('Error saving order date:', error);
+        // Revert local state if save fails
+        setOrderDates(prev => {
+          const newState = { ...prev };
+          delete newState[productId];
+          return newState;
+        });
+      }
+    } catch (error) {
+      console.error('Error saving order date:', error);
+      // Revert local state if save fails
+      setOrderDates(prev => {
+        const newState = { ...prev };
+        delete newState[productId];
+        return newState;
+      });
+    }
   };
 
   const getIconColor = (productId: string) => {
@@ -128,7 +173,14 @@ function Alerts() {
                     </button>
                     {orderDates[product.id] && (
                       <div className="mt-1 text-xs text-gray-500">
-                        Commandé le: {orderDates[product.id]}
+                        Commandé le: {new Date(orderDates[product.id]).toLocaleDateString('fr-FR', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })}
                       </div>
                     )}
                     <Link

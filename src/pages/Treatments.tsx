@@ -12,6 +12,7 @@ function Treatments() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selectedTreatment, setSelectedTreatment] = useState<Treatment | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   useEffect(() => {
     loadData();
@@ -49,10 +50,8 @@ function Treatments() {
   };
 
   const filteredTreatments = treatments.filter(treatment => {
-    const patientName = `${treatment.patient?.first_name} ${treatment.patient?.last_name}`.toLowerCase();
     const searchLower = searchTerm.toLowerCase();
-    return patientName.includes(searchLower) ||
-           treatment.type.toLowerCase().includes(searchLower) ||
+    return treatment.type.toLowerCase().includes(searchLower) ||
            treatment.notes?.toLowerCase().includes(searchLower);
   });
 
@@ -111,6 +110,32 @@ function Treatments() {
       </div>
 
       <div className="bg-white shadow rounded-lg overflow-hidden">
+        <label htmlFor="patient-select" className="block text-sm font-medium text-gray-700 px-4 py-2">
+          Sélectionner un patient:
+        </label>
+        <select
+          id="patient-select"
+          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 sm:text-sm px-4 py-2"
+          value={selectedPatient ? selectedPatient.id : ''}
+          onChange={(e) => {
+            const patientId = e.target.value;
+            const patient = patients.find(p => p.id === patientId);
+            setSelectedPatient(patient || null);
+          }}
+        >
+          <option value="">Tous les patients</option>
+          {patients.map((patient) => (
+            <option key={patient.id} value={patient.id}>
+              {patient.first_name} {patient.last_name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <h2 className="px-6 py-3 text-left text-lg font-medium text-gray-900">
+          {selectedPatient ? `Traitements pour ${selectedPatient.first_name} ${selectedPatient.last_name}` : 'Tous les traitements'}
+        </h2>
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -118,10 +143,10 @@ function Treatments() {
                 Date
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Patient
+                Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type
+                Patient
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Produits utilisés
@@ -135,67 +160,69 @@ function Treatments() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredTreatments.map((treatment) => (
-              <tr key={treatment.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <Calendar className="h-5 w-5 text-gray-400 mr-2" />
-                    <span className="text-sm text-gray-900">
-                      {new Date(treatment.date).toLocaleDateString()}
+            {filteredTreatments
+              .filter(treatment => !selectedPatient || treatment.patient_id === selectedPatient.id)
+              .map((treatment) => (
+                <tr key={treatment.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center">
+                      <Calendar className="h-5 w-5 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-900">
+                        {new Date(treatment.date).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      treatment.type === 'IMPLANT' ? 'bg-blue-100 text-blue-800' :
+                      treatment.type === 'CLEANING' ? 'bg-green-100 text-green-800' :
+                      treatment.type === 'EXTRACTION' ? 'bg-red-100 text-red-800' :
+                      treatment.type === 'FILLING' ? 'bg-yellow-100 text-yellow-800' :
+                      treatment.type === 'CROWN' ? 'bg-purple-100 text-purple-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {treatmentTypeTranslations[treatment.type] || treatment.type}
                     </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <User className="h-5 w-5 text-gray-400 mr-2" />
-                    <span className="text-sm font-medium text-gray-900">
-                      {treatment.patient?.first_name} {treatment.patient?.last_name}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    treatment.type === 'IMPLANT' ? 'bg-blue-100 text-blue-800' :
-                    treatment.type === 'CLEANING' ? 'bg-green-100 text-green-800' :
-                    treatment.type === 'EXTRACTION' ? 'bg-red-100 text-red-800' :
-                    treatment.type === 'FILLING' ? 'bg-yellow-100 text-yellow-800' :
-                    treatment.type === 'CROWN' ? 'bg-purple-100 text-purple-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {treatmentTypeTranslations[treatment.type] || treatment.type}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="space-y-1">
-                    {treatment.products?.map((product) => (
-                      <div key={product.id} className="flex items-center text-sm text-gray-500">
-                        <Package className="h-4 w-4 mr-1" />
-                        {product.product.name} ({product.quantity})
-                      </div>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <Euro className="h-5 w-5 text-gray-400 mr-2" />
-                    <span className="text-sm text-gray-900">
-                      {treatment.cost.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
-                  <button
-                    onClick={() => {
-                      setSelectedTreatment(treatment);
-                      setShowModal(true);
-                    }}
-                    className="text-primary-600 hover:text-primary-900"
-                  >
-                    <Edit2 className="h-5 w-5" />
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center">
+                      <User className="h-5 w-5 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-900">
+                        {patients.find(patient => patient.id === treatment.patient_id)?.first_name} {patients.find(patient => patient.id === treatment.patient_id)?.last_name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-1">
+                      {treatment.products?.map((product) => (
+                        <div key={product.id} className="flex items-center text-sm text-gray-500">
+                          <Package className="h-4 w-4 mr-1" />
+                          {product.product.name} ({product.quantity})
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center">
+                      <Euro className="h-5 w-5 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-900">
+                        {treatment.cost.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right text-sm font-medium">
+                    <button
+                      onClick={() => {
+                        setSelectedTreatment(treatment);
+                        setShowModal(true);
+                      }}
+                      className="text-primary-600 hover:text-primary-900"
+                    >
+                      <Edit2 className="h-5 w-5" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
